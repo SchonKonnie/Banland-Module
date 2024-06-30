@@ -1,0 +1,9 @@
+{
+  "name": "Banland_Module",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$path": "src/"
+    }
+  }
+}
