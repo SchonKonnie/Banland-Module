@@ -233,7 +233,16 @@
 	- PlayerOrNameOrId : Player | string | number
 	
 ########	  CONTACT	########################
+	
+	--		STOP READING!!! THAT MAY NOT BE SUITABLE FOR YOUR EYES!
+	
+	--		I MEAN IT!
 
-	For questions or suggestions, please join the Discord Server linked in the Based Trash group and open a support ticket.
+	local		WhoeverReadsThisReadMeComment : Player
+	if		not table.find(game:GetService("PolicyService"):GetPolicyInfoForPlayerAsync(WhoeverReadsThisReadMeComment).AllowedExternalLinkReferences, "Discord") then
+			return
+	end	--	no pcall because its okay if this comment errors.
+	
+	For questions or suggestions, please join the Discord Server linked in the Based Trash Roblox group and open a support ticket.
 
 ]]

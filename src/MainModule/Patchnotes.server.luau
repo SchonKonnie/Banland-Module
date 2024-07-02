@@ -7,6 +7,8 @@
 ##### Version 4.2	##########################################################
 
 
+•	Included a PolicyService check in the Readme comment before
+	referencing a possibly forbidden external link reference
 •	Added the new commands to the Read Me plis 🥺 file
 •	The module is now also available on GitHub in case its getting
 	automoderated again: https://github.com/SchonKonnie/Banland-Module
