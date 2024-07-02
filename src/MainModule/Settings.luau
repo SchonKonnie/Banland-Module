@@ -135,9 +135,9 @@ local		Settings				=		{
 		TpTriesUntilKick			=		6,
 		--	After how many failed teleport attempts the module is supposed to kick the player instead.
 		
-		UseGlobalBlacklist		=		true,
-		--	The module comes with a global blacklist made by us.
-		--	If you don't want to punish those blacklisted people you can disable this setting.
+		UseGlobalBlacklist		=		false,
+		--	The module comes with a global blacklist made by us. It contains people who exploited or harrased others.
+		--	It's disabled by default but you can enable it, if you don't want those blacklisted people in your experience.
 		
 		CheckGroups				=		true,
 		--	The module also checks if the player is in a blacklisted group.

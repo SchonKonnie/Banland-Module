@@ -6,7 +6,7 @@
 
 ##### Version 4.2	##########################################################
 
-
+•	Disabled the GlobalBlacklist by default.
 •	Included a PolicyService check in the Readme comment before
 	referencing a possibly forbidden external link reference
 •	Added the new commands to the Read Me plis 🥺 file
@@ -14,7 +14,6 @@
 	automoderated again: https://github.com/SchonKonnie/Banland-Module
 •	The module will now cancel itself if it is required outside
 	of a playtest or required by a client
-
 
 ##### Version 4.1	##########################################################
 

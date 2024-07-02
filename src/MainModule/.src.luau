@@ -1,7 +1,6 @@
 local		TELEPORT									=		game:GetService("TeleportService")
 local		PLAYERS									=		game:GetService("Players")
 local		GROUP										=		game:GetService("GroupService")
-local		HTTP										=		game:GetService("HttpService")
 local		MPS										=		game:GetService("MarketplaceService")
 local		RUN										=		game:GetService("RunService")
 
@@ -16,7 +15,7 @@ end
 
 local		Settings									=		require(script.Settings)
 local		SystemMessageModul							=		require(script.Stuff.SystemMessageModul)
-local		GlobalBlacklist								=		if Settings.UseGlobalBlacklist then require(16704678709) else {}
+local		GlobalBlacklist								=		if Settings.UseGlobalBlacklist then require(16704678709) else {} -- Disabled by default. Has to get enabled in the settings or else it won't get required.
 
 local		TeleportScreen								=		script.Stuff:FindFirstChild("TeleportScreen")
 local		BannedIndicatorGUI							=		script.Stuff:FindFirstChild("BannedIndicator")
