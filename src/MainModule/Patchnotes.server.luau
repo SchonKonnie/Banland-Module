@@ -4,6 +4,16 @@
 
 --[[
 
+##### Version 4.2.1	##########################################################
+
+•	Reanabled the GlobalBlacklist by default.
+	Note:	The Roblox support clarified that my module got restricted
+	quote: 'for having "Require function"' hence I had to remove it from
+	my module completely.
+	This is ridiculus! The moderator is clearly not qualified for their
+	job and I just gotta try again and hope for someone competent to
+	moderate my module…
+	
 ##### Version 4.2	##########################################################
 
 •	Disabled the GlobalBlacklist by default.

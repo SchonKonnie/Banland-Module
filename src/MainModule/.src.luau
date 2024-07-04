@@ -15,7 +15,20 @@ end
 
 local		Settings									=		require(script.Settings)
 local		SystemMessageModul							=		require(script.Stuff.SystemMessageModul)
-local		GlobalBlacklist								=		if Settings.UseGlobalBlacklist then require(16704678709) else {} -- Disabled by default. Has to get enabled in the settings or else it won't get required.
+local		GlobalBlacklist								=		{}
+
+--		Imports an external Module  containing a global blacklist of users who have been banned for exploiting, harassment, etc.
+if		Settings.UseGlobalBlacklist == true then
+		local		Erfolg, Result						=		pcall(function()
+				return	require(16704678709) -- a scary external module 😱 which only gets required, when the user decides to have the "UseGlobalBlacklist" set to true
+		end)
+		if		not Erfolg then
+				Settings.UseGlobalBlacklist				=		false
+		
+		else
+				GlobalBlacklist						=		Result
+		end
+end
 
 local		TeleportScreen								=		script.Stuff:FindFirstChild("TeleportScreen")
 local		BannedIndicatorGUI							=		script.Stuff:FindFirstChild("BannedIndicator")
