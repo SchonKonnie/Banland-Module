@@ -17,7 +17,6 @@ local		TextChatCommands								=		TCS:WaitForChild("TextChatCommands")
 local		UserIdCache									=		{}
 local		RegisterCommandsModul							=		{}
 
-
 --		Kein Plan, was ich damals gemacht habe aber es funktioniert…
 local		function	NeueMatrix(N, M)
 		local		Matrix							=		table.create(N, table.create(M, 0))

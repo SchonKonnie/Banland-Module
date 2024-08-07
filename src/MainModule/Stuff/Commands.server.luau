@@ -14,7 +14,6 @@ local		Settings									=		require(script.Parent.Parent.Settings)
 local		SystemMessageModul							=		require(script.Parent.SystemMessageModul)
 local		RegisterCommandsModul							=		require(script.Parent.RegisterCommandsModul)
 
-
 --		Simuliert die gleiche Funktion, die im Banland Modul benutzt wird, um zu prüfen, ob die Zeitangabe gültig ist oder geskippt wurde.
 local		function	ZeitUmrechnen(Zeit : string | number | nil)
 		if		not Zeit then return end
@@ -314,6 +313,30 @@ end, - 99999, Settings.AllowOfflineCommands)
 
 --		Offline Commands
 if		not Settings.AllowOfflineCommands then return end
+
+RegisterCommandsModul:RegisterOfflineCommand("EditActiveRecord", "EditActiveRecord", "EditRecord", function(Spieler, TargetId, Dauer, ...)		
+		SystemMessageModul:Send(Spieler, "Trying to edit the active record of ".. TargetId .. "…")
+		
+		local		Reason							=		TupleToString(...)		
+		local		Valid, Permanent						=		ZeitUmrechnen(Dauer)
+		if		not Valid then
+				if		Reason then
+						Reason					=		Dauer.." "..Reason
+				else
+						Reason					=		Dauer
+				end
+				SystemMessageModul:Send(Spieler, Banland:EditActiveRecord(TargetId, nil, Reason, nil, Spieler.Name))
+			
+		else
+				if		Permanent then
+						SystemMessageModul:Send(Spieler, "Cannot change the duration to permanent. Unban and Permban the player instead.")
+				
+				else
+						SystemMessageModul:Send(Spieler, Banland:EditActiveRecord(TargetId, Dauer, Reason, nil, Spieler.Name))
+				end
+		end
+		
+end)
 
 RegisterCommandsModul:RegisterOfflineCommand("OfflineUnban", "Unban", "OfflineUnban", function(Spieler, TargetId, CaseId, DeleteRecord)
 		SystemMessageModul:Send(Spieler, "Trying to unban ".. TargetId .. "…")

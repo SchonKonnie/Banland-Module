@@ -205,7 +205,16 @@
 	- CaseId : number | "all"
 	- DeleteRecord : boolean?
 		- If the entry should also be deleted in the local DataStore
-		  
+	  
+- [ ] EditActiveRecord
+	- Player : Player
+	- Duration : string | number  | nil
+	- ReasonExternal : string?
+	- ReasonInternal : string?
+	- ResponsibleMod : string?
+	- Buyouts : boolean | number | nil
+	- IncrementFactor : number?
+	  
 - [ ] OfflineRemoveRecord
 	- PlayerNameOrId : string | number
 	- CaseId : number | "all"

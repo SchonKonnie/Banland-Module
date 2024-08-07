@@ -1,16 +1,36 @@
 local		TELEPORT									=		game:GetService("TeleportService")
 local		PLAYERS									=		game:GetService("Players")
+local		MESSAGE									=		game:GetService("MessagingService")
 local		GROUP										=		game:GetService("GroupService")
 local		MPS										=		game:GetService("MarketplaceService")
 local		RUN										=		game:GetService("RunService")
 
+type		BanlandModule								=		{	--	for auto-completition. Please lmk if there is another way
+				Owner								:		number,
+				BanPlayer : (BanlandModule, Player : Player, Duration : string | number | nil, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?, Buyouts : boolean | number | nil, IncrementFactor : number?) -> string,
+				BanAltAccounts : (BanlandModule, Player : Player, Duration : string | number | nil, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?) -> string,
+				OfflineBanPlayer : (BanlandModule, PlayerNameOrId : string | number, Duration : string | number | nil, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?, Buyouts : boolean | number | nil, IncrementFactor : number?) -> string,
+				OfflineBanAltAccounts : (BanlandModule, PlayerNameOrId : string | number, Duration : string | number | nil, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?) -> string,
+				PermbanPlayer : (BanlandModule, Player : Player, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?) -> string,
+				OfflinePermbanPlayer : (BanlandModule, PlayerNameOrId : string | number, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?) -> string,
+				VisitBanland : (BanlandModule, Player : Player, ResponsibleMod : string?) -> string,
+				RemoveRecord : (BanlandModule, Player : Player, CaseId : number | "all", DeleteRecord : boolean?) -> string,
+				EditActiveRecord : (BanlandModule, PlayerNameOrId : string | number, Duration : string | number | nil, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?, Buyouts : boolean | number | nil, IncrementFactor : number?) -> string,
+				OfflineRemoveRecord : (BanlandModule, PlayerNameOrId : string | number, CaseId : number | "all", DeleteRecord : boolean?) -> string,
+				MarkAsUnbannedInBanland : (BanlandModule, Player : Player, CaseId : number?) -> string,
+				Unban : (BanlandModule, PlayerNameOrId : string | number, CaseId : number?, DeleteRecord : boolean?) -> string,
+				UnbanAltAccounts : (BanlandModule, PlayerNameOrId : string | number) -> string,
+				GetRecords : (BanlandModule, PlayerOrNameOrId : Player | string | number) -> string,
+				GetAltAccountBanRecords : (BanlandModule, PlayerOrNameOrId : Player | string | number) -> string,
+				WipePlayerData : (BanlandModule, PlayerOrNameOrId : Player | string | number) -> string,
+		}
 if		not RUN:IsRunning() then
 		warn("Can't require this module outside of a playtest because it would destroy its own functionality :(")
-		return	false
+		return	{} :: BanlandModule
 
 elseif	RUN:IsClient() then
-		error("Woah! This module shouldnt be in reach of clients!")
-		return	false
+		warn("Woah! This module shouldnt be in reach of clients!")
+		return	{} :: BanlandModule
 end
 
 local		Settings									=		require(script.Settings)
@@ -39,8 +59,8 @@ if		not BannedIndicatorGUI then
 		print("BannedIndicator not found D:")
 end
 
-local		MaxActiveCases								=		20
-local		MaxScheduledActions							=		10 --This limit is nessesary because for every action the player will get teleported on join and it is be a terrible experience to be stuck in an infinite teleport loop.
+local		MaxActiveRecords								=		1	--	Please do not change this Setting. Its unfair to the player if they can't see, if they're banned multiple times.
+local		MaxScheduledActions							=		10	--	This limit is nessesary because for every action the player will get teleported on join and it is be a terrible experience to be stuck in an infinite teleport loop.
 
 local		RecordsCache								=		{}
 local		Debounce									=		{}
@@ -514,6 +534,27 @@ local		function	PlayerAdded(Spieler : Player)
 		end
 end
 
+local		function	OfflineCommandListener(Message)
+		if		type(Message.Data) ~= "table" then return end
+		local		Daten								=		Message.Data
+		
+		local		Spieler							=		PLAYERS:GetPlayerByUserId(Daten.UserId)
+		if		not Spieler then return end
+		
+		if		Spieler.UserId == Banland.Owner then
+				print("Someone tried to use an offline command on the Owner.")
+				return
+		end
+		
+		if		Daten.Aktion == "Kick" then
+				Spieler:Kick(Daten.Argumente and Daten.Argumente[1] or "Someone used an offline command on you.")
+				
+		else
+				--		PlayerAdded nochmal durchführen. Da werden die Daten neu geladen und alle weiteren Fälle abgedeckt
+				PlayerAdded(Spieler)
+		end
+end
+
 local		function	PlayerRemoving(Spieler : Player)
 		RecordsCache[Spieler]							=		nil
 		Debounce[Spieler]								=		nil
@@ -586,7 +627,7 @@ function	Banland:BanPlayer(Player : Player, Duration : string | number | nil, Re
 				if	BanInfo.Aktiv ~= true then continue end
 				ActiveCases							+=		1
 		end
-		if		ActiveCases >= MaxActiveCases then
+		if		ActiveCases >= MaxActiveRecords then
 				print("Ban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases)
 				return	"Ban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases	
 		end
@@ -767,7 +808,7 @@ function	Banland:OfflineBanPlayer(PlayerNameOrId : string | number, Duration : s
 				if	BanInfo.Aktiv ~= true then continue end
 				ActiveCases							+=		1
 		end
-		if		ActiveCases >= MaxActiveCases then
+		if		ActiveCases >= MaxActiveRecords then
 				print("Offlineban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases)
 				return	"Offlineban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases	
 		end
@@ -797,6 +838,11 @@ function	Banland:OfflineBanPlayer(PlayerNameOrId : string | number, Duration : s
 		if		Success == false then
 				return	"Saving failed. Offlineban unsuccessful."
 		end
+		
+		--		Offline Command auf anderen Servern durchsetzen, falls der Spieler dort online ist
+		task.defer(function()
+				MESSAGE:PublishAsync("BanlandModul_OfflineCommands", {UserId = UserId})
+		end)
 		
 		return	PlayerNameOrId .. " got banned for " .. if Duration then tostring(Duration) else Settings.DefaultBanDuration
 end
@@ -880,6 +926,11 @@ function	Banland:OfflineBanAltAccounts(PlayerNameOrId : string | number, Duratio
 				return	"Offlineban unsuccessful. "..Response
 		end
 		
+		--		Offline Command auf anderen Servern durchsetzen, falls der Spieler dort online ist
+		task.defer(function()
+				MESSAGE:PublishAsync("BanlandModul_OfflineCommands", {UserId = UserId, Aktion = "Kick", Argumente = {ReasonExternal or "You got banned from this experience."}})
+		end)
+		
 		return	PlayerNameOrId .. " got banned for " .. if Duration then tostring(Duration) else Settings.DefaultBanDuration
 end
 
@@ -932,7 +983,7 @@ function	Banland:PermbanPlayer(Player : Player, ReasonExternal : string?, Reason
 				if	BanInfo.Aktiv ~= true then continue end
 				ActiveCases							+=		1
 		end
-		if		ActiveCases >= MaxActiveCases then
+		if		ActiveCases >= MaxActiveRecords then
 				print("Permban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases)
 				return	"Permban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases	
 		end
@@ -1042,7 +1093,7 @@ function	Banland:OfflinePermbanPlayer(PlayerNameOrId : string | number, ReasonEx
 				if	BanInfo.Aktiv ~= true then continue end
 				ActiveCases							+=		1
 		end
-		if		ActiveCases >= MaxActiveCases then
+		if		ActiveCases >= MaxActiveRecords then
 				print("Offlinepermban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases)
 				return	"Offlinepermban failed. There are too many active cases for that player already.\nThey first need to get unbanned before getting banned again.\nActiveCases: "..ActiveCases	
 		end
@@ -1068,6 +1119,11 @@ function	Banland:OfflinePermbanPlayer(PlayerNameOrId : string | number, ReasonEx
 		if		Success == false then
 				return	"Saving failed. Offlinepermban unsuccessful."
 		end
+		
+		--		Offline Command auf anderen Servern durchsetzen, falls der Spieler dort online ist
+		task.defer(function()
+				MESSAGE:PublishAsync("BanlandModul_OfflineCommands", {UserId = UserId})
+		end)
 
 		return	PlayerNameOrId .. " got permanently banned."
 end
@@ -1123,12 +1179,117 @@ function	Banland:RemoveRecord(Player : Player, CaseId : number | "all", DeleteRe
 		
 		assert(type(CaseId) == "number", "The CaseId has to be a number")
 		
-		local		Result					=		RemoveRecord(Player, CaseId, DeleteRecord)
+		local		Result							=		RemoveRecord(Player, CaseId, DeleteRecord)
 		if		Result ~= true then
 				return	"The attempt to remove the record failed. "..if type(Result) == "string" then Result else ""
 		end
 		
 		return	"Successfully sent "..Player.Name.." to banland to remove record "..CaseId..". (If the teleport didn't fail)"
+end
+
+--		Overwrites the active record of the given player
+function	Banland:EditActiveRecord(PlayerNameOrId : string | number, Duration : string | number | nil, ReasonExternal : string?, ReasonInternal: string?, ResponsibleMod : string?, Buyouts : boolean | number | nil, IncrementFactor : number?)
+		if		not Settings.AllowOfflineCommands then 
+				warn("Offline Commands are disabled!")
+				return	"Offline commands are disabled!"
+		end
+		
+		assert(PlayerNameOrId and type(PlayerNameOrId) == "string" or type(PlayerNameOrId) == "number", "PlayerNameOrId needs to be a string or number.")
+		
+		if		Debounce[PlayerNameOrId] then return "Commands on this target are on debounce." end
+		task.spawn(function()
+				Debounce[PlayerNameOrId]				=		true
+				task.wait(2)
+				Debounce[PlayerNameOrId]				=		nil
+		end)
+		
+		assert(ReasonExternal == nil or type(ReasonExternal) == "string", "The external reason has to be a string or nil.")
+		if		ReasonExternal and string.len(ReasonExternal) > 100 then
+				ReasonExternal						=		string.sub(ReasonExternal, 1, 100)
+		end
+		
+		assert(ReasonInternal == nil or type(ReasonInternal) == "string", "The internal reason has to be a string or nil.")
+		if		ReasonInternal and string.len(ReasonInternal) > 100 then
+				ReasonInternal						=		string.sub(ReasonInternal, 1, 100)
+		end
+		
+		assert(Buyouts == nil or type(Buyouts) == "boolean" or type(Buyouts) == "number", "Buyouts has to be a boolean, a GamepassId or nil.")
+		if		Buyouts == nil then
+				Buyouts							=		Settings.DefaultBuyouts
+		end
+
+		assert(IncrementFactor == nil or type(IncrementFactor) == "number", "The increment factor has to be a number or nil.")
+		if		IncrementFactor then
+				IncrementFactor						=		math.clamp(IncrementFactor, 0, 10)
+		end
+		
+		assert(ResponsibleMod == nil or type(ResponsibleMod) == "string", "The responsible mod has to be a string or nil.")
+		if		ResponsibleMod and string.len(ResponsibleMod) > 50 then
+				ResponsibleMod						=		string.sub(ResponsibleMod, 1, 50)
+		end
+		
+		local		UserId							=		tonumber(PlayerNameOrId)
+		if		not UserId then
+				local		Erfolg, Ergebnis				=		pcall(function()
+						return	PLAYERS:GetUserIdFromNameAsync(PlayerNameOrId)
+				end)
+				
+				if		not Erfolg then
+						return	"EditActiveRecord was not successful. Was not able to get the UserId of '"..PlayerNameOrId.."'"
+				else
+						
+						UserId					=		Ergebnis
+				end
+		end
+
+		local		Player							=		PLAYERS:GetPlayerByUserId(UserId)
+		if		Player then
+				return	tostring(PlayerNameOrId) .. " is online on this server. Therefore there should be no active case for them yet or anymore."
+		end
+		
+		local		Records							=		Settings:GetPlayerDataMethod(UserId)
+		if		not Records then
+				return	"Error: Couldn't load player data."
+		end
+		assert(type(Records) == "table", "The GetPlayerDataMethod has to return a table for the module to store data.")
+		--		Rückwärtskompatibilität sichern 🙄
+		if		not Records.Records then
+				Records							=		{
+						Records					=		Records,
+						Aktionen					=		{}
+				}
+		end
+		
+		--		Nächsten aktiven Record finden
+		local		ActiveRecord						=		nil
+		for		CaseId, BanInfo in Records.Records do		
+				if		not BanInfo.Aktiv then continue end
+				ActiveRecord						=		BanInfo
+				break
+		end
+		if		not ActiveRecord then
+				return	"EditActiveRecord was not successful. Currently there is no active record for "..PlayerNameOrId
+		end
+		
+		--		Daten überschreiben
+		ActiveRecord.DauerInSekunden						=		if Duration then ZeitUmrechnen(Duration) else ActiveRecord.DauerInSekunden
+		ActiveRecord.GrundExtern						=		ReasonExternal or ActiveRecord.GrundExtern
+		ActiveRecord.GrundIntern						=		ReasonInternal or ActiveRecord.GrundIntern
+		ActiveRecord.Buyouts							=		Buyouts or ActiveRecord.Buyouts
+		ActiveRecord.IncrementFaktor						=		IncrementFactor or ActiveRecord.IncrementFaktor
+		ActiveRecord.ResponsibleMod						=		ResponsibleMod or ActiveRecord.ResponsibleMod
+			
+		--		Speichern
+		local		Success							=		Settings:SetPlayerDataMethod(UserId, Records)
+		if		Success == false then
+				print("[Banland Module]: Saving failed for ".. PlayerNameOrId..". Active record could not be edited.")
+
+				return	"EditActiveRecord was not successful: Saving failed."
+		end
+		
+		--		Offline Command auf anderen Servern durchsetzen ist nicht erforderlich, da der Spieler ja bereits gebannt sein müsste
+		
+		return	"The active record for "..PlayerNameOrId.." was successfully edited."
 end
 
 --		Removes the record in Banland on offline Players for the given CaseId
@@ -1263,12 +1424,17 @@ function	Banland:OfflineRemoveRecord(PlayerNameOrId : string | number, CaseId : 
 		})
 		
 		--		Speichern
-		local		Success					=		Settings:SetPlayerDataMethod(UserId, Records)
+		local		Success							=		Settings:SetPlayerDataMethod(UserId, Records)
 		if		Success == false then
 				print("[Banland Module]: Saving failed for ".. PlayerNameOrId..". Record could not be removed.")
 
 				return	"OfflineRemoveRecord was not successful: Saving failed."
 		end
+		
+		--		Offline Command auf anderen Servern durchsetzen, falls der Spieler dort online ist
+		task.defer(function()
+				MESSAGE:PublishAsync("BanlandModul_OfflineCommands", {UserId = UserId})
+		end)
 		
 		return	"The record was successfully marked to get removed, when "..PlayerNameOrId.." rejoins the experience."
 end
@@ -1511,6 +1677,8 @@ function	Banland:Unban(PlayerNameOrId : string | number, CaseId : number?, Delet
 				return	"Saving failed. Unban unsuccessful."
 		end
 		
+		--		Offline Command auf anderen Servern durchsetzen ist nicht erforderlich, da der Spieler ja aktuell gebannt sein müsste		
+		
 		return	tostring(PlayerNameOrId) .. " got unbanned."
 end
 
@@ -1565,6 +1733,8 @@ function	Banland:UnbanAltAccounts(PlayerNameOrId : string | number)
 		if		Success == false then
 				return	"Unban unsuccessful. "..Response
 		end
+		
+		--		Offline Command auf anderen Servern durchsetzen ist nicht erforderlich, da der Spieler ja aktuell gebannt sein müsste
 		
 		return	tostring(PlayerNameOrId) .. " and their alt accounts got unbanned."
 end
@@ -1710,8 +1880,15 @@ function	Banland:WipePlayerData(PlayerOrNameOrId : Player | string | number)
 						return	self:WipePlayerData(Player)
 				end
 				
+				--		Spieler kicken, falls er auf einem anderen Server online sein sollte. Eigentlich soll dieser Command aber nur an UserIds von Spielern genutzt werden, die ihren Roblox Account löschen lassen haben
+				task.defer(function()
+						MESSAGE:PublishAsync("BanlandModul_OfflineCommands", {UserId = UserId, Aktion = "Kick", Argumente = {"Someone wiped your Banland Data. This method was originally intended to be used on UserIds of players who deleted their accounts but here we are…"}})
+				end)
+		
 				return	Settings:WipePlayerDataMethod(UserId)	
 		end
+		
+		PlayerOrNameOrId:Kick("Someone wiped your Banland Data. This method was originally intended to be used on UserIds of players who deleted their accounts but here are you…")
 		
 		return	Settings:WipePlayerDataMethod(PlayerOrNameOrId.UserId)
 end
@@ -1723,6 +1900,7 @@ end
 PLAYERS.PlayerRemoving:Connect(PlayerRemoving)
 PLAYERS.PlayerAdded:Connect(PlayerAdded)
 TELEPORT.TeleportInitFailed:Connect(HandleFailedTeleport)
+MESSAGE:SubscribeAsync("BanlandModul_OfflineCommands", OfflineCommandListener)
 
 --		Owner getten
 task.spawn(GetOwner)

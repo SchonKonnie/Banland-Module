@@ -4,15 +4,30 @@
 
 --[[
 
-##### Version 4.2.1	##########################################################
+##### Version 4.3	##########################################################
+
+•	Added the EditActiveRecord Method and Command.
+	This command overwrites the active record of a player with the
+	given arguments.
+•	Changed the limit for total active records on a player to 1
+	Note: Since every ban gets handled in order, inmates in Banland won't
+	be able to tell, if they got 1 or multiple active bans.
+	Thats unfair so I changed the limit to the total active records.
+	If you want to change the duration of the active ban, you could either
+	unban the player and ban them again or change the duration in your
+	DataStore.
+•	The module now utilizes the MessagingService to enforce some
+	offline commands on players who are on other servers.
+	It might not work every time as the MessagingService can be
+	unreliable.
+
+##### Version 4.2.1	####################################################
 
 •	Reanabled the GlobalBlacklist by default.
-	Note:	The Roblox support clarified that my module got restricted
-	quote: 'for having "Require function"' hence I had to remove it from
-	my module completely.
-	This is ridiculus! The moderator is clearly not qualified for their
-	job and I just gotta try again and hope for someone competent to
-	moderate my module…
+	But removed its functionality entirely for the Roblox
+	Marketplace Verison.
+	Which means, if you get this Module from Github, it will have the
+	Global Blacklist but if you get it from Roblox it won't.
 	
 ##### Version 4.2	##########################################################
 

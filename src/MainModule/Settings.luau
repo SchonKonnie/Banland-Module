@@ -97,6 +97,11 @@ local		Settings				=		{
 		--	Change this method if you want this module to use your own DataStore stuff to cut down on the read limit use.
 		--	The arguments have to stay the same!
 		--	But do not return all player data but only a table where this module can save its entries!
+		--	If your method is not able to read and write data of offline players (e.g. if your DataStore stuff has some
+		--	sort of session locking), offline commands will not work and you should set "AllowOfflineCommands" (further below)
+		--	to false. If you allow offline commands, this method should not return cached data but always the current data
+		--	for the given UserId as the module might use this method to check for changes if an offline command was used
+		--	on another server.
 
 
 		SetPlayerDataMethod				=		function(self, UserId : number, Data : any)
@@ -110,6 +115,9 @@ local		Settings				=		{
 		--	But do not let it overwrite all player data but only the table where this module can save its entries!
 		--	The method has to return false if saving failed. The module will not attempt to call the method again
 		--	by itsself but it will notify the user if it failed.
+		--	If your method is not able to read and write data of offline players (e.g. if your DataStore stuff has some
+		--	sort of session locking), offline commands will not work and you should set "AllowOfflineCommands" (further below)
+		--	to false.
 		
 		
 		WipePlayerDataMethod				=		function(self, UserId : number)
@@ -129,7 +137,7 @@ local		Settings				=		{
 
 
 		AllowOfflineCommands		=		true,
-		--	Set this to false if your Set and Get PlayerDataMethods don not work with offline players.
+		--	Set this to false if your Set and Get PlayerDataMethods do not work with offline players.
 		--	Note that the Unban Method will also not work and you have to handle unbans yourself.
 		
 		TpTriesUntilKick			=		6,
@@ -144,7 +152,7 @@ local		Settings				=		{
 		--	This process may use up some API Limits so you can disable it separately.
 
 		BanlandPlaceId			=		16545628485,
-		--	The PlaceId of the Place where the player gets sent to. Don't change it unless you have a working place already! (TestPlaceId with more Bugs: 6339756876)
+		--	The PlaceId of the Place where the player gets sent to when banned. Do not change it unless you have a working place already! (TestPlaceId with more Bugs: 6339756876)
 
 }
 

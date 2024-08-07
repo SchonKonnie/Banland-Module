@@ -21,7 +21,6 @@ if		not main.initialized then
 		repeat	task.wait() until main.initialized
 end
 
-
 --		Simuliert die gleiche Funktion, die im Banland Modul benutzt wird, um zu prüfen, ob die Zeitangabe gültig ist oder geskippt wurde.
 local		function	ZeitUmrechnen(Zeit : string | number | nil)
 		if		not Zeit then return end
